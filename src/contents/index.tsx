@@ -1,0 +1,6 @@
+export { default as PageLogin } from './PageLogin'
+export { default as PageDiretor } from './PageDiretor'
+export { default as PageProfessor } from './PageProfessor'
+export { default as PageMerendeira } from './PageMerendeira'
+export { default as PageGestor } from './PageGestor'
+export { default as PageNutricionista } from './PageNutricionista'
