@@ -87,7 +87,8 @@ const Login = (props:propsLogin) => {
 
   const codeStep = async () => {
     try {
-      await api.post('/forgot-my-password/code', { params: { code, Authentication: token }})
+      const response = await api.post('/forgot-my-password/code', { params: { code, Authentication: token }})
+      setToken(response.data.token)
     } catch (erro) {
       console.log(erro)
       setMessage('Erro Interno no servidor')
