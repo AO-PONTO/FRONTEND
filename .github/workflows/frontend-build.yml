@@ -15,7 +15,7 @@ jobs:
         run: find . -type f -name '.env*' -exec rm -f {} +
         
       - name: Copy .env file
-        run: echo ${{ secrets.ENV }}
+        run: echo ${{ secrets.ENV_FRONTEND }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
