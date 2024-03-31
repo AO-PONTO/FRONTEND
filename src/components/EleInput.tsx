@@ -1,11 +1,12 @@
 'use client'
 
-import { propSelect } from '@/interface'
+import { propSelect } from '@/interface' // Importa a interface propSelect de um local específico
 import React from 'react'
-import { FaEye, FaEyeSlash, FaCaretDown, FaFile } from 'react-icons/fa'
+import { FaEye, FaEyeSlash, FaCaretDown, FaFile } from 'react-icons/fa' // Importa ícones do React
 
+// Interface para as props do componente Input
 interface propsInput {
-  type:
+  type: // Tipo do input
     | 'text'
     | 'password'
     | 'date'
@@ -14,27 +15,26 @@ interface propsInput {
     | 'checkbox'
     | 'textarea'
     | 'file'
-  label: string
-  name: string
-  size?: 'w-1/2' | 'w-1/3' | 'w-2/3' | 'w-1/4' | 'w-full'
-  data?: propSelect[]
-  defaultValue?: string | number
-  setCheck?: React.Dispatch<React.SetStateAction<boolean>>
-  disabled?: boolean
-  padding?: boolean
-  check?: boolean
-  value?: string | number
-  onChange?: (Arg0: string, Arg1: string) => void
+  label: string // Rótulo do input
+  name: string // Nome do input
+  size?: 'w-1/2' | 'w-1/3' | 'w-2/3' | 'w-1/4' | 'w-full' // Tamanho do input
+  data?: propSelect[] // Dados para input de seleção
+  defaultValue?: string | number // Valor padrão do input
+  setCheck?: React.Dispatch<React.SetStateAction<boolean>> // Função para atualizar o estado do checkbox
+  disabled?: boolean // Indica se o input está desativado
+  padding?: boolean // Indica se deve adicionar preenchimento ao input
+  check?: boolean // Estado do checkbox
+  value?: string | number // Valor do input
+  onChange?: (Arg0: string, Arg1: string) => void // Função chamada ao alterar o valor do input
 }
 
+// Componente funcional 'Input'
 const Input = (props: propsInput) => {
-  const [visible, setVisible] = React.useState<boolean>(false)
-  // const [value, setValue] = React.useState<string | number>('')
-  const [inUse, setInUse] = React.useState<boolean>(props.disabled ? true : props.value === '' ? false : true)
-  const [check, setCheck] = React.useState<boolean>(props.check || false)
-  //   const [valuesSelect, setValuesSelect] = React.useState<string[]>([])
-  //   const [open, setOpen] = React.useState<boolean>(false)
+  const [visible, setVisible] = React.useState<boolean>(false) // Estado para controlar a visibilidade da senha
+  const [inUse, setInUse] = React.useState<boolean>(props.disabled ? true : props.value === '' ? false : true) // Estado para indicar se o input está em uso
+  const [check, setCheck] = React.useState<boolean>(props.check || false) // Estado do checkbox
 
+  // Renderiza um input do tipo 'text'
   if (props.type === 'text') {
     return (
       <div
@@ -72,7 +72,9 @@ const Input = (props: propsInput) => {
         />
       </div>
     )
-  } else if (props.type === 'password') {
+  } 
+  // Renderiza um input do tipo 'password'
+  else if (props.type === 'password') {
     return (
       <div
         className={`${
@@ -111,7 +113,9 @@ const Input = (props: propsInput) => {
         </button>
       </div>
     )
-  } else if (props.type === 'date') {
+  } 
+  // Renderiza um input do tipo 'date'
+  else if (props.type === 'date') {
     return (
       <div
         className={`${
@@ -145,7 +149,9 @@ const Input = (props: propsInput) => {
         />
       </div>
     )
-  } else if (props.type === 'select') {
+  } 
+  // Renderiza um input do tipo 'select'
+  else if (props.type === 'select') {
     return (
       <div
         className={`${
@@ -189,7 +195,9 @@ const Input = (props: propsInput) => {
         />
       </div>
     )
-  } else if (props.type === 'number') {
+  } 
+  // Renderiza um input do tipo 'number'
+  else if (props.type === 'number') {
     return (
       <div
         className={`${
@@ -222,7 +230,9 @@ const Input = (props: propsInput) => {
         />
       </div>
     )
-  } else if (props.type === 'checkbox') {
+  } 
+  // Renderiza um input do tipo 'checkbox'
+  else if (props.type === 'checkbox') {
     return (
       <>
         <div
@@ -256,7 +266,9 @@ const Input = (props: propsInput) => {
         </div>
       </>
     )
-  } else if (props.type === 'textarea') {
+  } 
+  // Renderiza um input do tipo 'textarea'
+  else if (props.type === 'textarea') {
     return (
       <div
         className={`${
@@ -290,7 +302,9 @@ const Input = (props: propsInput) => {
         />
       </div>
     )
-  } else if (props.type === 'file') {
+  } 
+  // Renderiza um input do tipo 'file'
+  else if (props.type === 'file') {
     return (
       <div
         className={`${
@@ -318,4 +332,4 @@ const Input = (props: propsInput) => {
   }
 }
 
-export default Input
+export default Input // Exporta o componente Input

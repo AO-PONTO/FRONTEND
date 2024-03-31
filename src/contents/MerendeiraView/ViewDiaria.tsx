@@ -1,28 +1,30 @@
-import { EleAlert, EleButton, EleInput } from '@/components'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { cadAlunoTurma, cadRelatMer, dataAluno, dataCardEsc, dataFrequencia, dataSala, dataTurma } from '@/interface'
-import { formatDate } from '@/lib/utils'
-import api from '@/service/api'
-import React from 'react'
-import uuid from 'react-uuid'
+import { EleAlert, EleButton, EleInput } from '@/components' // Importa componentes personalizados
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table' // Importa componentes de tabela personalizados
+import { cadAlunoTurma, cadRelatMer, dataAluno, dataCardEsc, dataFrequencia, dataSala, dataTurma } from '@/interface' // Importa tipos de dados das interfaces
+import { formatDate } from '@/lib/utils' // Importa função de formatação de data
+import api from '@/service/api' // Importa o serviço de API
+import React from 'react' // Importa React
+import uuid from 'react-uuid' // Importa a biblioteca para gerar UUIDs
 
+
+// Define o componente de visualização da Diária
 const ViewDiaria = () => {
-
-  const getDate = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
+ // Função para obter a data atual
+ const getDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
   const date = new Date
-  const [alunos, setAlunos] = React.useState<number>(0)
-
-  const [diariaView, setDiariaView] = React.useState<string>('inicial')
-  const [currentDate, setCurrentDate] = React.useState<string>('')
-  const [cardapios, setCardapios] = React.useState<dataCardEsc[]>([])
-  const [cardapio, setCardapio] = React.useState<dataCardEsc | undefined>({
+  // Define estados do componente
+  const [alunos, setAlunos] = React.useState<number>(0) // Armazena o número de alunos
+  const [diariaView, setDiariaView] = React.useState<string>('inicial') // Controla a visualização da Diária
+  const [currentDate, setCurrentDate] = React.useState<string>('') // Armazena a data atual
+  const [cardapios, setCardapios] = React.useState<dataCardEsc[]>([]) // Armazena os cardápios
+  const [cardapio, setCardapio] = React.useState<dataCardEsc | undefined>({ // Armazena o cardápio selecionado
     cardapio_descricao:'',
     cardapio_name:'',
     cardapio_uuid:'',
@@ -33,23 +35,25 @@ const ViewDiaria = () => {
     updated_at:'',
     uuid:''
   })
-  const [relatorio, setRelatorio] = React.useState<cadRelatMer>({
-    created_at: formatDate(date),
-    data: getDate(),
+  const [relatorio, setRelatorio] = React.useState<cadRelatMer>({ // Armazena o relatório
+    created_at: formatDate(new Date()),
+    data: '',
     escola_name: '',
     escola_uuid: '',
-    numero_alunos: alunos.toString(),
+    numero_alunos: '',
     sobra_limpa: '',
     sobra_suja: '',
     updated_at: null,
     uuid: uuid()
   })
-  const dias:string[] = ['', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', '']
+  
+  const dias:string[] = ['', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', ''] // Define os dias da semana
 
-  const [alert, setAlert] = React.useState<boolean>(false)
-  const [exit, setExit] = React.useState<boolean>(false)
-  const [message, setMessage] = React.useState<string>('')
+  const [alert, setAlert] = React.useState<boolean>(false) // Controla a exibição do alerta
+  const [exit, setExit] = React.useState<boolean>(false) // Controla a saída do alerta
+  const [message, setMessage] = React.useState<string>('') // Armazena a mensagem do alerta
 
+  // Função para buscar a data atual e os cardápios da API
   const getCurrentDate = async () => {
     const today = new Date()
     const year = today.getFullYear()
@@ -74,6 +78,7 @@ const ViewDiaria = () => {
     }
   }
 
+  // Função para lidar com o envio do formulário de relatório
   const handleSubmit = async () => {
     const dataUser = localStorage.getItem('@aplication/aoponto')
     if (dataUser) {
@@ -103,6 +108,7 @@ const ViewDiaria = () => {
     }
   }
 
+  // Função para lidar com o número de alunos com base no horário
   const handleAlunosNumber = async () => {
     const dataUser = localStorage.getItem('@aplication/aoponto')
     if (dataUser) {
@@ -218,7 +224,7 @@ const ViewDiaria = () => {
     }
   }
 
-
+  // Função para lidar com a ação do alerta
   const alertAction = () => {
     if(exit) {
       setAlert(false)
@@ -227,18 +233,20 @@ const ViewDiaria = () => {
       setAlert(false)
     }
   }
-
+  // Função para lidar com a mudança nos campos do formulário
   const handleChangeForm = (value: string, label: string) => {
     setRelatorio((prev) => ({ ...prev, 
       [label]: value
     }))
   }
 
+    // Hook useEffect para buscar a data atual e os cardápios quando o componente é montado
   React.useEffect(() => {
     getCurrentDate()
     handleAlunosNumber()
   }, []);
 
+    // Renderização do componente
   return (
     <>
     {diariaView === 'relatorio' ? (
@@ -301,6 +309,7 @@ const ViewDiaria = () => {
         </>
       ): (<></>)}
 
+    {/* Exibe o alerta */}
     <EleAlert
         message={message}
         open={alert}
@@ -309,4 +318,5 @@ const ViewDiaria = () => {
   )
 }
 
+// Exporta o componente de visualização da Diária
 export default ViewDiaria

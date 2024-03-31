@@ -1,19 +1,20 @@
-import { EleButton, EleInput, EleAlert } from '@/components'
-import { dataUser, papelRequest, propSelect, propsView } from '@/interface'
-import api from '@/service/api'
-import { formatDate, stringNumber } from '@/lib/utils'
-import React from 'react'
+import { EleButton, EleInput, EleAlert } from '@/components' // Importa componentes personalizados de botão, input e alerta
+import { dataUser, papelRequest, propSelect, propsView } from '@/interface' // Importa tipos de dados de interface
+import api from '@/service/api' // Importa o módulo de serviço para fazer requisições à API
+import { formatDate, stringNumber } from '@/lib/utils' // Importa funções utilitárias
+import React from 'react' // Importa a biblioteca React
 
 interface Module {
-  form: dataUser,
-  setView: React.Dispatch<React.SetStateAction<string>>,
-  reset?: Function
+  form: dataUser, // Tipo de dados para o formulário do usuário
+  setView: React.Dispatch<React.SetStateAction<string>>, // Função para atualizar o estado da visualização
+  reset?: Function // Função opcional para redefinir o estado
 }
 
-const ModEditUser = (props: Module) => {
+const ModEditUser = (props: Module) => { // Declaração do componente funcional ModEditUser
 
-  const date = new Date
+  const date = new Date // Cria uma instância da data atual
 
+  // Define o estado para os tipos de dados de papel, acesso e escola, o formulário do usuário, o alerta, a saída e a mensagem
   const [papel, setPapel] = React.useState<propSelect[]>([])
   const [access, setAccess] = React.useState<papelRequest[]>([])
   const [escola, setEscola] = React.useState<propSelect[]>([])
@@ -22,59 +23,61 @@ const ModEditUser = (props: Module) => {
   const [exit, setExit] = React.useState<boolean>(false)
   const [message, setMessage] = React.useState<string>('')
   
+  // Função para lidar com a busca das escolas na API
   const handleEscolas = async () => {
     try {
-      const response = await api.get('/escolas', { params: { all: true } })
+      const response = await api.get('/escolas', { params: { all: true } }) // Faz uma requisição GET para obter todas as escolas
       if (response) {
-        const temp = response.data.map((item: { uuid: any; nome: any }) => {
+        const temp = response.data.map((item: { uuid: any; nome: any }) => { // Mapeia os dados da resposta para formatá-los como propSelect
           return {
             uuid: item.uuid,
             name: item.nome
           }
         })
-        setEscola(temp)
+        setEscola(temp) // Define o estado das escolas com os dados formatados
       }
     } catch (error) {
-      console.log(error)
+      console.log(error) // Log de erro, se houver algum problema na requisição
     }
   }
 
+  // Função para lidar com a busca dos papéis na API
   const handlePapel = async () => {
     try {
-      const response = await api.get('/papel', { params: { all: true } })
+      const response = await api.get('/papel', { params: { all: true } }) // Faz uma requisição GET para obter todos os papéis
       if (response) {
         const temp = response.data.map((item:papelRequest) => {
-          if (item.access_level <= 5) {
+          if (item.access_level <= 5) { // Filtra os papéis com nível de acesso menor ou igual a 5
             return {
               uuid: item.uuid,
               name: item.nome
             }
           }
           return null
-        }).filter((ele: null) => ele !== null)
-        setPapel(temp)
+        }).filter((ele: null) => ele !== null) // Remove os elementos nulos do array
+        setPapel(temp) // Define o estado dos papéis com os dados formatados
         const temp2 = response.data.map((item:papelRequest) => {
-          if (item.access_level <= 5) {
+          if (item.access_level <= 5) { // Filtra os papéis com nível de acesso menor ou igual a 5
             return item
           }
           return null
-        }).filter((ele: null) => ele !== null)
-        setAccess(temp2)
+        }).filter((ele: null) => ele !== null) // Remove os elementos nulos do array
+        setAccess(temp2) // Define o estado dos acessos com os dados formatados
       }
     } catch (error) {
-      console.log(error)
+      console.log(error) // Log de erro, se houver algum problema na requisição
     }
   }
 
+  // Função para lidar com a alteração dos valores do formulário
   const handleChangeForm = (value: string, label: string) => {
-    if (label === 'cpf') {
-      let valor = value.replace(/\D/g, '')
-      valor = valor.substring(0, 11)
+    if (label === 'cpf') { // Verifica se o campo alterado é o CPF
+      let valor = value.replace(/\D/g, '') // Remove todos os caracteres não numéricos do valor
+      valor = valor.substring(0, 11) // Limita o valor a 11 caracteres
 
-      valor = valor.replace(/(\d{3})(\d)/, '$1.$2')
-      valor = valor.replace(/(\d{3})(\d)/, '$1.$2')
-      valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-      
+      valor = valor.replace(/(\d{3})(\d)/, '$1.$2') // Formata o CPF
+      valor = valor.replace(/(\d{3})(\d)/, '$1.$2') // Formata o CPF
+      valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2') // Formata o CPF
 
       setForm((prev) => ({ ...prev, 
         [label]: valor
@@ -86,40 +89,42 @@ const ModEditUser = (props: Module) => {
     }
   }
 
+  // Função para lidar com o envio do formulário
   const handleSubmit = async () => {
-    let updatedForm = { ...form, cpf: form.cpf.replace(/[.-]/g,''), updated_at: date }
+    let updatedForm = { ...form, cpf: form.cpf.replace(/[.-]/g,''), updated_at: date } // Formata o CPF e define a data de atualização
     if(updatedForm.cpf === '' ||
       updatedForm.data_nascimento === '' ||
       updatedForm.escola_uuid === '' ||
       updatedForm.papel_uuid === '' ||
       updatedForm.email === '' ||
-      !stringNumber(updatedForm.cpf)) {
-      setMessage('Preencha todos os campos corretamente')
-      setAlert(true)
+      !stringNumber(updatedForm.cpf)) { // Verifica se todos os campos necessários foram preenchidos corretamente
+      setMessage('Preencha todos os campos corretamente') // Define a mensagem de erro
+      setAlert(true) // Define o alerta como verdadeiro para exibir a mensagem
     } else {
       try {
-        await api.put('/usuario/', updatedForm, { params: { uuid: updatedForm.uuid }})
-        setMessage('Usuário editado com sucesso!')
-        setExit(true)
-        setAlert(true)
+        await api.put('/usuario/', updatedForm, { params: { uuid: updatedForm.uuid }}) // Faz a requisição PUT para atualizar os dados do usuário na API
+        setMessage('Usuário editado com sucesso!') // Define a mensagem de sucesso
+        setExit(true) // Define a saída como verdadeira para fechar o modal após o sucesso
+        setAlert(true) // Define o alerta como verdadeiro para exibir a mensagem
       } catch (error:any) {
-        setMessage(error.config.response.data.detail)
-        setAlert(true)
-        console.log(error)
+        setMessage(error.config.response.data.detail) // Define a mensagem de erro com base na resposta da API
+        setAlert(true) // Define o alerta como verdadeiro para exibir a mensagem
+        console.log(error) // Log de erro, se houver algum problema na requisição
       }
     }
   }
   
 
   React.useEffect(()=> {
-    handleEscolas()
-    handlePapel()
+    handleEscolas() // Executa a função para buscar as escolas quando o componente é montado
+    handlePapel() // Executa a função para buscar os papéis quando o componente é montado
   }, [])
 
+  // Efeito para atualizar os nomes da escola, do papel e o nível de acesso do usuário selecionado
   React.useEffect(()=> {
-    const papelName = papel.find(item => item.uuid === form.papel_uuid)
-    const escolaName = escola.find(item => item.uuid === form.escola_uuid)
-    const accessLevel = access.find(item => item.uuid === form.papel_uuid)
+    const papelName = papel.find(item => item.uuid === form.papel_uuid) // Encontra o nome do papel com base no UUID
+    const escolaName = escola.find(item => item.uuid === form.escola_uuid) // Encontra o nome da escola com base no UUID
+    const accessLevel = access.find(item => item.uuid === form.papel_uuid) // Encontra o nível de acesso com base no UUID do papel
 
     if (escolaName !== undefined) {
       setForm(prev => ({...prev,
@@ -140,20 +145,22 @@ const ModEditUser = (props: Module) => {
     }
   }, [escola, papel, access, form.escola_uuid, form.papel_uuid])
 
+  // Função para lidar com a ação do alerta (fechar ou redirecionar)
   const alertAction = () => {
     if(exit) {
-      setAlert(false)
-      props.setView('Listar')
-      props.reset && props.reset()
+      setAlert(false) // Define o alerta como falso para fechar o modal
+      props.setView('Listar') // Redireciona para a visualização de listagem de usuários
+      props.reset && props.reset() // Reseta o estado, se a função de reset estiver definida
     } else {
-      setAlert(false)
+      setAlert(false) // Define o alerta como falso para fechar o modal
     }
   }
 
   return (
-    <>
-      <h1 className='text-lg w-full px-2'>Editar Usuário</h1>
-      <div className='flex flex-wrap gap-x-4 p-2'>
+    <> {/* Fragmento React */}
+      <h1 className='text-lg w-full px-2'>Editar Usuário</h1> {/* Título do formulário */}
+      <div className='flex flex-wrap gap-x-4 p-2'> {/* Div contendo os inputs do formulário */}
+        {/* Inputs para editar os dados do usuário */}
         <EleInput 
           label='Nome Completo'
           type='text'
@@ -203,16 +210,16 @@ const ModEditUser = (props: Module) => {
           onChange={handleChangeForm}
         />
       </div>
-      <div className='w-full flex'>
-        <EleButton onClick={() => props.setView('Listar')}>Cancelar</EleButton>
-        <EleButton onClick={handleSubmit}>Editar</EleButton>
+      <div className='w-full flex'> {/* Div contendo os botões de Cancelar e Editar */}
+        <EleButton onClick={() => props.setView('Listar')}>Cancelar</EleButton> {/* Botão para cancelar a edição */}
+        <EleButton onClick={handleSubmit}>Editar</EleButton> {/* Botão para enviar o formulário de edição */}
       </div>
       <EleAlert 
         message={message}
         open={alert}
-        setAlert={alertAction}/>
+        setAlert={alertAction}/> {/* Componente de alerta para exibir mensagens de sucesso ou erro */}
     </>
   )
 }
 
-export default ModEditUser
+export default ModEditUser // Exporta o componente ModEditUser

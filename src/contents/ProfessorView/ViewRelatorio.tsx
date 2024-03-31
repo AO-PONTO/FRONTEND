@@ -1,5 +1,5 @@
-import React from 'react'
-import {
+import React from 'react'; // Importação do React
+import { // Importação dos componentes de tabela
   Table,
   TableBody,
   TableCaption,
@@ -8,19 +8,35 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import api from '@/service/api'
-import { cadAlunoTurma, dataAluno, dataFrequencia, dataSala, dataTurma, dataUser, horario, propSelect, propsView } from '@/interface'
-import { FaEdit, FaTrashAlt } from "react-icons/fa"
-import { EleAlert, EleButton, EleInput, EstContainer, EstModal } from '@/components'
-import { IoMdTime } from 'react-icons/io'
+} from "@/components/ui/table";
+import api from '@/service/api'; // Importação do serviço de API
+import { // Importação das interfaces necessárias
+  cadAlunoTurma,
+  dataAluno,
+  dataFrequencia,
+  dataSala,
+  dataTurma,
+  dataUser,
+  horario,
+  propSelect,
+  propsView,
+} from '@/interface';
+import { FaEdit, FaTrashAlt } from "react-icons/fa"; // Importação de ícones
+import { // Importação de componentes personalizados
+  EleAlert,
+  EleButton,
+  EleInput,
+  EstContainer,
+  EstModal,
+} from '@/components';
+import { IoMdTime } from 'react-icons/io'; // Importação de ícones
 
-const ViewRelatorio = (props: propsView) => {
+const ViewRelatorio = (props: propsView) => { // Declaração do componente funcional ViewRelatorio
 
-  const [conf, setConf] = React.useState<boolean>(false)
-
-  const [turmas, setTurmas] = React.useState<dataTurma[]>([])
-  const [turma, setTurma] = React.useState<dataTurma>({
+  // Declaração de estados
+  const [conf, setConf] = React.useState<boolean>(false); // Estado para controle de exibição da confirmação de exclusão
+  const [turmas, setTurmas] = React.useState<dataTurma[]>([]); // Estado para armazenar as turmas
+  const [turma, setTurma] = React.useState<dataTurma>({ // Estado para armazenar os dados da turma selecionada
     created_at: '',
     disciplina: '',
     horario: '',
@@ -28,31 +44,32 @@ const ViewRelatorio = (props: propsView) => {
     sala: '',
     updated_at: '',
     uuid:  ''
-  })
-  const [salas, setSalas] = React.useState<propSelect[]>([])
-  const [sala, setSala] = React.useState<string>('')
-  const [actionView, setActionView] = React.useState<string>('Listar')
-  const [alert, setAlert] = React.useState<boolean>(false)
-  const [uuid, setUuid] = React.useState<string>('')
+  });
+  const [salas, setSalas] = React.useState<propSelect[]>([]); // Estado para armazenar as salas
+  const [sala, setSala] = React.useState<string>(''); // Estado para armazenar a sala selecionada
+  const [actionView, setActionView] = React.useState<string>('Listar'); // Estado para controle de visualização de ação
+  const [alert, setAlert] = React.useState<boolean>(false); // Estado para controle de exibição de alerta
+  const [uuid, setUuid] = React.useState<string>(''); // Estado para armazenar o UUID
 
-  const [alunoTurma, setAlunoTurma] = React.useState<cadAlunoTurma[]>([])
-  const [aluno, setAluno] = React.useState<cadAlunoTurma>({
+  const [alunoTurma, setAlunoTurma] = React.useState<cadAlunoTurma[]>([]); // Estado para armazenar os alunos da turma
+  const [aluno, setAluno] = React.useState<cadAlunoTurma>({ // Estado para armazenar os dados do aluno selecionado
     aluno_uuid: '',
     created_at: '',
     turma_name: '',
     turma_uuid: '',
     updated_at: '',
     uuid: ''
-  })
-  const [frequencias, setFrequencias] = React.useState<dataFrequencia[]>([])
-  const [alunos, setAlunos] = React.useState<dataAluno[]>([])
-  const [load, setLoad] = React.useState<boolean>(false)
-  const [detail, setDetail] = React.useState<boolean>(false)
+  });
+  const [frequencias, setFrequencias] = React.useState<dataFrequencia[]>([]); // Estado para armazenar as frequências dos alunos
+  const [alunos, setAlunos] = React.useState<dataAluno[]>([]); // Estado para armazenar os dados dos alunos
+  const [load, setLoad] = React.useState<boolean>(false); // Estado para controle de exibição do carregamento
+  const [detail, setDetail] = React.useState<boolean>(false); // Estado para controle de exibição do detalhe de presença
 
-  const [alert2, setAlert2] = React.useState<boolean>(false)
-  const [exit, setExit] = React.useState<boolean>(false)
-  const [message, setMessage] = React.useState<string>('')
+  const [alert2, setAlert2] = React.useState<boolean>(false); // Estado para controle de exibição de alerta 2
+  const [exit, setExit] = React.useState<boolean>(false); // Estado para controle de saída do alerta
+  const [message, setMessage] = React.useState<string>(''); // Estado para mensagem do alerta
 
+  // Função para buscar as turmas do professor
   const handleTurmas = async () => {
     try {
       const response = await api.get('/aluno-turmas', { params: { all: true , attribute : "turma_uuid", value: turma.uuid } } )
@@ -62,6 +79,7 @@ const ViewRelatorio = (props: propsView) => {
     }
   }
 
+  // Função para buscar as salas da escola
   const handleSalas = async () => {
     const dataUser = localStorage.getItem('@aplication/aoponto')
     if (dataUser) {
@@ -86,6 +104,8 @@ const ViewRelatorio = (props: propsView) => {
       }
     }
   }
+
+  // Função para buscar as frequências do aluno
   const handleAluno = async () => {
     try {
       const response = await api.get('/frequencias', { params: { all: true, attribute: 'aluno_turmas_uuid', value: aluno.uuid }})
@@ -95,19 +115,22 @@ const ViewRelatorio = (props: propsView) => {
     }
   }
 
+  // Efeito para buscar as salas ao montar o componente
   React.useEffect(()=> {
     handleSalas()
   }, [])
 
+  // Efeito para buscar as turmas ao selecionar uma sala
   React.useEffect(() => {
     handleTurmas()
   }, [turma])
 
+  // Efeito para buscar as frequências ao selecionar um aluno
   React.useEffect(() => {
     handleAluno()
   }, [aluno])
 
-
+  // Função para lidar com a seleção de uma sala
   const handleSelect = async (value: string, label: string) => {
     setSala(value)
     const dataUser = localStorage.getItem('@aplication/aoponto')
@@ -122,6 +145,7 @@ const ViewRelatorio = (props: propsView) => {
     }
   }
 
+  // Função para resetar a seleção da sala
   const handleReset = async () => {
     try {
       const response = await api.get('/turmas', { params: { all: true, attribute: 'sala', value: sala }})
@@ -131,6 +155,7 @@ const ViewRelatorio = (props: propsView) => {
     }
   }
 
+  // Função para realizar a exclusão de uma turma
   const deleteAction = async () => {
     try {
       await api.delete('/turmas', { params: { uuid: uuid }})
@@ -140,6 +165,7 @@ const ViewRelatorio = (props: propsView) => {
     }
   }
 
+  // Função para salvar as alterações nas frequências
   const handleSave = async () => {
     try{
       frequencias.map(async (item) => {
@@ -154,6 +180,7 @@ const ViewRelatorio = (props: propsView) => {
     }
   }
 
+  // Função para controlar a ação do alerta
   const alertAction = () => {
     setAlert2(false)
     setDetail(false)
@@ -308,4 +335,4 @@ const ViewRelatorio = (props: propsView) => {
   )
 }
 
-export default ViewRelatorio
+export default ViewRelatorio; // Exportação do componente ViewRelatorio

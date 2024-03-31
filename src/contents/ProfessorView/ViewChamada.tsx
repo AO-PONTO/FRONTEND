@@ -1,49 +1,34 @@
-import { EleAlert, EleButton, EleInput, EstModal } from '@/components'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { cadAlunoTurma, cadTurma, dataAluno, dataFrequencia, dataSala, dataTurma, horario, propSelect } from '@/interface'
-import { formatDate, formatShortDate } from '@/lib/utils'
-import api from '@/service/api'
-import React from 'react'
-import { QrReader } from 'react-qr-reader'
-import uuid from 'react-uuid'
+import React from 'react'; // Importação do React
+import { EleAlert, EleButton, EleInput, EstModal } from '@/components'; // Importação de componentes customizados
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // Importação de componentes de tabela customizados
+import { cadAlunoTurma, cadTurma, dataAluno, dataFrequencia, dataSala, dataTurma, horario, propSelect } from '@/interface'; // Importação de tipos e interfaces específicos
+import { formatDate, formatShortDate } from '@/lib/utils'; // Importação de funções utilitárias
+import api from '@/service/api'; // Importação do módulo de API
+import { QrReader } from 'react-qr-reader'; // Componente de leitura de QR code
+import uuid from 'react-uuid'; // Biblioteca para geração de UUIDs
 
-interface propsPresenca {
-  matricula: string,
-  nome: string,
-  presente: boolean
-}
-
-const presenca:propsPresenca[] = [
-  { matricula: '001', nome: "Prof. Silva", presente: false},
-  { matricula: '002', nome: "Profa. Oliveira", presente: false},
-  { matricula: '003', nome: "Prof. Santos", presente: true},
-  { matricula: '004', nome: "Profa. Lima", presente: false},
-  { matricula: '005', nome: "Prof. Pereira", presente: true},
-  { matricula: '006', nome: "Profa. Costa", presente: false},
-  { matricula: '007', nome: "Prof. Martins", presente: false},
-  { matricula: '008', nome: "Profa. Almeida", presente: true},
-]
-
+// Interface para representar a estrutura dos alunos em uma turma
 interface mapAluno {
-  aluno_turmas_uuid: string
-  chamada: boolean
-  created_at: string
-  data: string
-  updated_at: string | null
-  uuid: string
-  matricula: string
-  nome: string
+  aluno_turmas_uuid: string;
+  chamada: boolean;
+  created_at: string;
+  data: string;
+  updated_at: string | null;
+  uuid: string;
+  matricula: string;
+  nome: string;
 }
 
+// Componente de chamada de presença
 const ViewChamada = () => {
-  const [reviewPresenca, setReviewPresenca] = React.useState<Boolean>(false)
-  const [currentDate, setCurrentDate] = React.useState<string>('')
-  const [presentData, setPresentData] = React.useState<propsPresenca[]>(presenca)
-  const [data, setData] = React.useState<string>('No result')
-  const [openModal, setOpenModal] = React.useState<boolean>(false)
-  const [turma, setTurma] = React.useState<boolean>(false)
-  const [turmas, setTurmas] = React.useState<cadTurma[]>([])
-  const [turmaSelect, setTurmaSelect] = React.useState<cadTurma>({
+  // Estados do componente
+  const [reviewPresenca, setReviewPresenca] = React.useState<boolean>(false); // Estado para revisar a presença
+  const [currentDate, setCurrentDate] = React.useState<string>(''); // Estado para armazenar a data atual
+  const [data, setData] = React.useState<string>('No result'); // Estado para armazenar dados do QR code
+  const [openModal, setOpenModal] = React.useState<boolean>(false); // Estado para controlar a abertura do modal
+  const [turma, setTurma] = React.useState<boolean>(false); // Estado para controlar a exibição da turma
+  const [turmas, setTurmas] = React.useState<cadTurma[]>([]); // Estado para armazenar as turmas
+  const [turmaSelect, setTurmaSelect] = React.useState<cadTurma>({ // Estado para armazenar a turma selecionada
     created_at: '',
     disciplina: '',
     horario: [],
@@ -51,70 +36,72 @@ const ViewChamada = () => {
     sala: '',
     updated_at: '',
     uuid: ''
-  })
-  const [alunos, setAlunos] = React.useState<mapAluno[]>([])
-  const [salas, setSalas] = React.useState<dataSala[]>([])
+  });
+  const [alunos, setAlunos] = React.useState<mapAluno[]>([]); // Estado para armazenar os alunos da turma
+  const [salas, setSalas] = React.useState<dataSala[]>([]); // Estado para armazenar as salas
 
-  const [alert, setAlert] = React.useState<boolean>(false)
-  const [exit, setExit] = React.useState<boolean>(false)
-  const [message, setMessage] = React.useState<string>('')
+  const [alert, setAlert] = React.useState<boolean>(false); // Estado para controlar a exibição do alerta
+  const [exit, setExit] = React.useState<boolean>(false); // Estado para controlar a saída do alerta
+  const [message, setMessage] = React.useState<string>(''); // Estado para armazenar a mensagem do alerta
 
-  const diaSemana:propSelect[] = [
+  // Array com os dias da semana
+  const diaSemana: propSelect[] = [
     { name: 'segunda', uuid: '1' },
     { name: 'terça', uuid: '2' },
     { name: 'quarta', uuid: '3' },
     { name: 'quinta', uuid: '4' },
     { name: 'sexta', uuid: '5' }
-  ]
+  ];
 
-  const date = new Date
+  const date = new Date();
 
+  // Função para buscar as turmas associadas ao usuário
   const handleTurmas = async () => {
-    const dataUser = localStorage.getItem('@aplication/aoponto')
+    const dataUser = localStorage.getItem('@aplication/aoponto');
     if (dataUser) {
-      const tempUser = JSON.parse(dataUser)
+      const tempUser = JSON.parse(dataUser);
       try {
-        const response = await api.get('/turmas', { params: { all: true, attribute: 'nome_professor', value: tempUser.user.nome }})
+        const response = await api.get('/turmas', { params: { all: true, attribute: 'nome_professor', value: tempUser.user.nome }});
         if (response) {
-          const tempData:cadTurma[] = []
-          response.data.map((item:dataTurma) => {
-            tempData.push({...item,
-              horario: JSON.parse(item.horario.replace(/'/g, '"'))
-            })
-          })
-          setTurmas(tempData)
+          const tempData: cadTurma[] = response.data.map((item: dataTurma) => ({
+            ...item,
+            horario: JSON.parse(item.horario.replace(/'/g, '"'))
+          }));
+          setTurmas(tempData);
         }
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
     }
-  }
+  };
 
+  // Função para buscar as salas associadas ao usuário
   const handleSalas = async () => {
-    const dataUser = localStorage.getItem('@aplication/aoponto')
+    const dataUser = localStorage.getItem('@aplication/aoponto');
     if (dataUser) {
-      const tempUser = JSON.parse(dataUser)
+      const tempUser = JSON.parse(dataUser);
       try {
-        const response = await api.get('/salas', { params: { all: true, attribute: 'escola_uuid', value: tempUser.user.escola_uuid }})
+        const response = await api.get('/salas', { params: { all: true, attribute: 'escola_uuid', value: tempUser.user.escola_uuid }});
         if(response) {
-          setSalas(response.data)
+          setSalas(response.data);
         }
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
     }
-  }
+  };
 
+  // Função para buscar os alunos de uma turma
   const handleAlunos = async (ele: cadTurma) => {
     try {
       const response = await api.get('/aluno-turmas', { params: {
         all: true, attribute: 'turma_uuid', value: ele.uuid
-      }})
-      const alunosDaTurma: mapAluno[] = []
+      }});
+      const alunosDaTurma: mapAluno[] = [];
       response.data.map( async (item: cadAlunoTurma) => {
         const resp = await api.get('/alunos', { params: {
           all: false, attribute: 'uuid', value: item.aluno_uuid
-        }})
+        }});
         alunosDaTurma.push({
           aluno_turmas_uuid: item.uuid,
           chamada: false,
@@ -124,26 +111,25 @@ const ViewChamada = () => {
           uuid: uuid(),
           matricula: resp.data.matricula.toString(),
           nome: resp.data.nome
-        })
-      })
-      setAlunos(alunosDaTurma)
-      console.log(alunosDaTurma)
+        });
+      });
+      setAlunos(alunosDaTurma);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
+  // Função para submeter a chamada de presença
   const handleSubmit = async () => {
-    const horarios: horario[] = []
+    const horarios: horario[] = [];
     turmaSelect.horario.map((item: horario) => {
       if (item.dia === date.getDay().toString()) {
-        horarios.push(item)
+        horarios.push(item);
       }
-    })
+    });
     try {
       horarios.map(i => {
         alunos.map(async item => {
-          console.log(item.data)
           const update: dataFrequencia = {
             aluno_turmas_uuid: item.aluno_turmas_uuid,
             chamada: item.chamada,
@@ -152,202 +138,213 @@ const ViewChamada = () => {
             hora: i.hora,
             updated_at: item.updated_at,
             uuid: item.uuid,
-          }
-          await api.post('/frequencias', update )
-        })
-      })
-      setMessage('Frequencia Submetida')
-      setAlert(true)
-      setTurma(false)
-      setReviewPresenca(false)
+          };
+          await api.post('/frequencias', update );
+        });
+      });
+      setMessage('Frequencia Submetida');
+      setAlert(true);
+      setTurma(false);
+      setReviewPresenca(false);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
+  // Função para verificar se a chamada já foi realizada no dia
   const validTurmaDay = async (ele: cadTurma) => {
     try {
-      const response = await api.get('/aluno-turmas', { params: { all: true, attribute: 'turma_uuid', value: ele.uuid }})
-      const resp = await api.get('/frequencias', { params: { all: true, attribute: 'aluno_turmas_uuid', value: response.data[0].uuid }})
+      const response = await api.get('/aluno-turmas', { params: { all: true, attribute: 'turma_uuid', value: ele.uuid }});
+      const resp = await api.get('/frequencias', { params: { all: true, attribute: 'aluno_turmas_uuid', value: response.data[0].uuid }});
       if (resp.data.filter((item: dataFrequencia) => item.data === currentDate).length !== 0) {
-        return false
+        return false;
       } else {
-        return true
+        return true;
       }
     } catch (error) {
-      console.log(error)
-      return false
+      console.log(error);
+      return false;
     }
-  }
+  };
 
-
+  // Função para manipular a ação do alerta
   const alertAction = () => {
     if(exit) {
-      setAlert(false)
+      setAlert(false);
     } else {
-      setAlert(false)
+      setAlert(false);
     }
-  }
+  };
 
+  // Efeito para buscar as turmas e as salas ao montar o componente
   React.useEffect(()=>{
-    handleTurmas()
-    handleSalas()
-  },[])
+    handleTurmas();
+    handleSalas();
+  },[]);
 
+  // Efeito para atualizar a data atual
   React.useEffect(() => {
     const getCurrentDate = () => {
-      const today = new Date()
-      const year = today.getFullYear()
-      const month = String(today.getMonth() + 1).padStart(2, '0')
-      const day = String(today.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    }
-    setCurrentDate(getCurrentDate())
-  }, [])
-  
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    setCurrentDate(getCurrentDate());
+  }, []);
 
+  // Retorno do componente
   return (
-  <>
-    {turma ? (
-      <>
-      <EleButton onClick={() => {
-        setTurma(false)
-        setReviewPresenca(false)
-      }}>Voltar a Seleção de Turma</EleButton>
-        {reviewPresenca ? (
-          <>
-          <EleInput 
-            label='Data de Hoje' 
-            type='date' 
-            value={currentDate} 
-            name='data'
-          />
-          <div className='p-2 w-full'>
-            <Table>
-              <TableHeader>
-                  <TableRow>
-                    <TableHead></TableHead>
-                    <TableHead>Matricula</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Presença</TableHead>
-                  </TableRow>
-              </TableHeader>
-              <TableBody>
-                {alunos.map((element) => {
-                return (
-                  <TableRow onClick={() => {}} className={`${element.chamada ? 'bg-green-200' : 'bg-red-200'} relative`} key={element.matricula}>
-                      <input 
-                          className='w-full absolute opacity-0 h-full'
-                          type='checkbox' 
-                          id={element.matricula}
-                          defaultChecked={element.chamada ? true : false}
-                          onChange={() => {
-                            const newArray = alunos.map(aluno => {
-                              if (aluno.uuid === element.uuid) {
-                                return {...aluno, chamada: !aluno.chamada}
-                              }
-                              return aluno
-                            })
-                            setAlunos(newArray)
-                          }}
-                      />
-                      <TableCell>{element.matricula}</TableCell>
-                      <TableCell>{element.nome}</TableCell>
-                      {element.chamada ? (<TableCell>Presente</TableCell>) : (<TableCell>Ausente</TableCell>)}
-                  </TableRow>
-                )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-          <EleButton onClick={handleSubmit}>Submeter Chamada</EleButton>
-          </>
-        ) : (
-          <>
-            <QrReader
+    <>
+      {/* Condicional para exibir a seleção de turma ou a chamada de presença */}
+      {turma ? (
+        <>
+          <EleButton onClick={() => {
+            setTurma(false);
+            setReviewPresenca(false);
+          }}>Voltar a Seleção de Turma</EleButton>
+          {/* Condicional para exibir a revisão da presença ou o scanner QR code */}
+          {reviewPresenca ? (
+            <>
+              <EleInput 
+                label='Data de Hoje' 
+                type='date' 
+                value={currentDate} 
+                name='data'
+              />
+              <div className='p-2 w-full'>
+                {/* Tabela para exibir os alunos e registrar a presença */}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead></TableHead>
+                      <TableHead>Matricula</TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Presença</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {alunos.map((element) => {
+                      return (
+                        <TableRow onClick={() => {}} className={`${element.chamada ? 'bg-green-200' : 'bg-red-200'} relative`} key={element.matricula}>
+                          <input 
+                            className='w-full absolute opacity-0 h-full'
+                            type='checkbox' 
+                            id={element.matricula}
+                            defaultChecked={element.chamada ? true : false}
+                            onChange={() => {
+                              const newArray = alunos.map(aluno => {
+                                if (aluno.uuid === element.uuid) {
+                                  return {...aluno, chamada: !aluno.chamada}
+                                }
+                                return aluno
+                              });
+                              setAlunos(newArray);
+                            }}
+                          />
+                          <TableCell>{element.matricula}</TableCell>
+                          <TableCell>{element.nome}</TableCell>
+                          {element.chamada ? (<TableCell>Presente</TableCell>) : (<TableCell>Ausente</TableCell>)}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              {/* Botão para submeter a chamada de presença */}
+              <EleButton onClick={handleSubmit}>Submeter Chamada</EleButton>
+            </>
+          ) : (
+            <>
+              {/* Componente para ler QR code */}
+              <QrReader
                 onResult={(result) => {
-                    if (!!result) {
+                  if (!!result) {
                     setData(result?.getText());
-                    setOpenModal(true)
-                    }
+                    setOpenModal(true);
+                  }
                 }}
                 constraints={{facingMode : 'user'}}
                 className='max-w-[500px] w-full m-auto'
-            />
-            <EstModal confirm={() => {
+              />
+              {/* Modal para exibir os detalhes do aluno */}
+              <EstModal confirm={() => {
                 const newArray = alunos.map(aluno => {
                   if (aluno.matricula === data) {
-                    return {...aluno, chamada: true}
+                    return {...aluno, chamada: true};
                   }
-                  return aluno
-                })
-                setAlunos(newArray)
-                setOpenModal(false)
-            }} exit={()=> setOpenModal(false)} open={openModal}>
+                  return aluno;
+                });
+                setAlunos(newArray);
+                setOpenModal(false);
+              }} exit={()=> setOpenModal(false)} open={openModal}>
+                {/* Detalhes do aluno */}
                 {alunos.map((ele) => {
-                    if (ele.matricula === data) {
-                        return (
-                            <div className='p-8'>
-                            <p className='text-2xl text-center w-full'>Nome: {ele.nome}</p>
-                            <p className='text-2xl text-center w-full'>Matricula: {ele.matricula}</p>
-                            </div>
-                        )
-                    }
-                }, [data])}
-            </EstModal>
-          </>
-        )}
-          <EleButton onClick={()=> {
-              setReviewPresenca(!reviewPresenca)
-              console.log(presentData)
-              }}>{reviewPresenca ? 'Voltar' : 'Revisar'}</EleButton>
-      </>
-    ) : (
-    <>
-      {turmas.length === 0 || salas.length === 0 ? (
-        <p className='text-center w-full'>Aguarde alguns instantes...</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Disciplinas</TableHead>
-              <TableHead>Série</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {turmas.map((element) => (
-              <>
-                <TableRow onClick={async () => {
-                  if (element.horario.some(item => item.dia === date.getDay().toString())) {
-                    if (await validTurmaDay(element)) {
-                      setTurmaSelect(element)
-                      setTurma(true)
-                      handleAlunos(element)
-                    } else {
-                      setMessage('Você já cadastrou a frequencia dessa turma hoje')
-                      setAlert(true)
-                    }
-                  } else {
-                    setMessage('Você não dará aula dessa matéria hoje')
-                    setAlert(true)
+                  if (ele.matricula === data) {
+                    return (
+                      <div className='p-8'>
+                        <p className='text-2xl text-center w-full'>Nome: {ele.nome}</p>
+                        <p className='text-2xl text-center w-full'>Matricula: {ele.matricula}</p>
+                      </div>
+                    );
                   }
-                }} key={element.uuid}>
-                  <TableCell>{element.disciplina}</TableCell>
-                  <TableCell>{salas.find(item => item.uuid === element.sala)?.nome + ' - ' + salas.find(item => item.uuid === element.sala)?.ano}</TableCell>
+                }, [data])}
+              </EstModal>
+            </>
+          )}
+          {/* Botão para revisar ou voltar à seleção de turma */}
+          <EleButton onClick={()=> {
+            setReviewPresenca(!reviewPresenca);
+          }}>{reviewPresenca ? 'Voltar' : 'Revisar'}</EleButton>
+        </>
+      ) : (
+        <>
+          {/* Condicional para exibir a seleção de turmas ou uma mensagem de espera */}
+          {turmas.length === 0 || salas.length === 0 ? (
+            <p className='text-center w-full'>Aguarde alguns instantes...</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Disciplinas</TableHead>
+                  <TableHead>Série</TableHead>
                 </TableRow>
-              </>
-            ))}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {/* Exibição das turmas disponíveis */}
+                {turmas.map((element) => (
+                  <TableRow onClick={async () => {
+                    if (element.horario.some(item => item.dia === date.getDay().toString())) {
+                      if (await validTurmaDay(element)) {
+                        setTurmaSelect(element);
+                        setTurma(true);
+                        handleAlunos(element);
+                      } else {
+                        setMessage('Você já cadastrou a frequencia dessa turma hoje');
+                        setAlert(true);
+                      }
+                    } else {
+                      setMessage('Você não dará aula dessa matéria hoje');
+                      setAlert(true);
+                    }
+                  }} key={element.uuid}>
+                    <TableCell>{element.disciplina}</TableCell>
+                    <TableCell>{salas.find(item => item.uuid === element.sala)?.nome + ' - ' + salas.find(item => item.uuid === element.sala)?.ano}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </>
       )}
+      {/* Alerta para exibir mensagens */}
+      <EleAlert 
+        message={message}
+        open={alert}
+        setAlert={alertAction}/>
     </>
-    )}
-    <EleAlert 
-      message={message}
-      open={alert}
-      setAlert={alertAction}/>
-  </>
-  )
+  );
 }
 
-export default ViewChamada
+export default ViewChamada;

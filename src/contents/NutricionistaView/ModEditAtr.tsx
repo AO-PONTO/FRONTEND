@@ -1,8 +1,9 @@
-import { EleButton, EleInput, EleAlert } from '@/components'
-import { cardapioRequest, dataCardEsc, dataUser, papelRequest, propSelect, propsView } from '@/interface'
-import api from '@/service/api'
-import { formatDate, stringNumber } from '@/lib/utils'
-import React from 'react'
+
+import { EleButton, EleInput, EleAlert } from '@/components' // Importação de componentes de interface
+import { cardapioRequest, dataCardEsc, propSelect } from '@/interface' // Importação de tipos e interfaces
+import api from '@/service/api' // Importação do módulo de API
+import React from 'react' // Importação do React
+
 
 interface Module {
   form: dataCardEsc,
@@ -10,9 +11,11 @@ interface Module {
   reset?: Function
 }
 
+// Componente de edição de atribuição
 const ModEditAtr = (props: Module) => {
 
-  const diaSemana:propSelect[] = [
+  // Opções de dia da semana e turno
+  const diaSemana: propSelect[] = [
     { name: 'segunda', uuid: 'segunda' },
     { name: 'terça', uuid: 'terça' },
     { name: 'quarta', uuid: 'quarta' },
@@ -20,14 +23,15 @@ const ModEditAtr = (props: Module) => {
     { name: 'sexta', uuid: 'sexta' }
   ]
 
-  const turno:propSelect[] = [
+  const turno: propSelect[] = [
     { name: 'matutino', uuid: 'matutino' },
     { name: 'vespertino', uuid: 'vespertino' },
     { name: 'noturno', uuid: 'noturno' }
   ]
 
-  const date = new Date
+  const date = new Date // Objeto de data atual
 
+    // Estados do componente
   const [cardapioSubmit, setCardapioSubmit] = React.useState<cardapioRequest[]>([])
   const [cardapio, setCardapio] = React.useState<propSelect[]>([])
   const [form, setForm] = React.useState<dataCardEsc>(props.form)
@@ -35,10 +39,12 @@ const ModEditAtr = (props: Module) => {
   const [exit, setExit] = React.useState<boolean>(false)
   const [message, setMessage] = React.useState<string>('')
   
+    // Função para lidar com a busca dos cardápios disponíveis
   const handleCardapio = async () => {
     try {
       const response = await api.get('/cardapio', { params: { all: true } })
       if (response) {
+        // Formatação dos dados dos cardápios para seleção
         const temp = response.data.map((item:cardapioRequest) => {
           return {
             uuid: item.uuid,
@@ -58,21 +64,25 @@ const ModEditAtr = (props: Module) => {
     }
   }
 
+    // Função para lidar com a alteração dos campos do formulário
   const handleChangeForm = (value: string, label: string) => {
     setForm((prev) => ({ ...prev, 
       [label]: value
     }))
   }
 
+    // Função para lidar com o envio do formulário
   const handleSubmit = async () => {
     let updatedForm = form
     if(updatedForm.cardapio_uuid === '' ||
     updatedForm.dia_da_semana === '' ||
     updatedForm.turno === '') {
+      // Verificação se todos os campos obrigatórios foram preenchidos
       setMessage('Preencha todos os campos corretamente')
       setAlert(true)
     } else {
       try {
+          // Requisição PUT para atualizar a atribuição
         await api.put('/cardapio-escola/', updatedForm, { params: { uuid: updatedForm.uuid }})
         setMessage('Atribuição editada com sucesso!')
         setExit(true)
@@ -86,10 +96,12 @@ const ModEditAtr = (props: Module) => {
     }
   }
 
+    // Efeito para carregar os cardápios disponíveis ao montar o componente
   React.useEffect(()=> {
     handleCardapio()
   }, [])
 
+    // Efeito para atualizar o nome e descrição do cardápio selecionado
   React.useEffect(()=> {
     const cardapioName = cardapioSubmit.find(item => item.uuid === form.cardapio_uuid)
 
@@ -101,6 +113,7 @@ const ModEditAtr = (props: Module) => {
     }
   }, [cardapioSubmit, form.cardapio_uuid])
 
+    // Função para lidar com a ação do alerta
   const alertAction = () => {
     if(exit) {
       setAlert(false)
@@ -109,12 +122,15 @@ const ModEditAtr = (props: Module) => {
       setAlert(false)
     }
   }
-
+  
+  // Retorno do componente
   return (
     <>
+      {/* Título do formulário */}
       <h1 className='text-lg w-full px-2'>Editar Atribuição</h1>
+      {/* Formulário de edição de atribuição */}
       <div className='flex flex-wrap gap-x-4 p-2 w-full'>
-        <EleInput 
+        <EleInput
           label='Cardápio'
           type='select'
           data={cardapio}
@@ -122,8 +138,8 @@ const ModEditAtr = (props: Module) => {
           name='cardapio_uuid'
           value={form.cardapio_uuid}
           onChange={handleChangeForm}
-          />
-        <EleInput 
+        />
+        <EleInput
           label='Dia da Semana'
           type='select'
           data={diaSemana}
@@ -132,7 +148,7 @@ const ModEditAtr = (props: Module) => {
           value={form.dia_da_semana}
           onChange={handleChangeForm}
         />
-        <EleInput 
+        <EleInput
           label='Turno'
           type='select'
           data={turno}
@@ -142,16 +158,18 @@ const ModEditAtr = (props: Module) => {
           onChange={handleChangeForm}
         />
       </div>
+      {/* Botões de ação */}
       <div className='w-full flex'>
         <EleButton onClick={() => props.setView('Listar')}>Cancelar</EleButton>
         <EleButton onClick={handleSubmit}>Editar</EleButton>
       </div>
-      <EleAlert 
+      {/* Alerta para exibir mensagens */}
+      <EleAlert
         message={message}
         open={alert}
-        setAlert={alertAction}/>
+        setAlert={alertAction} />
     </>
   )
 }
 
-export default ModEditAtr
+export default ModEditAtr // Exportação do componente

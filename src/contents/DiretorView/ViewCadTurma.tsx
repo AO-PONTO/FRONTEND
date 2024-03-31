@@ -1,3 +1,4 @@
+// Importações necessárias para o componente, incluindo componentes UI, interfaces, API e utilitários.
 import { EleButton, EleInput, EleAlert } from '@/components'
 import { cadTurma, dataSala, dataUser, horario, propSelect, propsView } from '@/interface'
 import api from '@/service/api'
@@ -8,8 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { FaTrashAlt } from 'react-icons/fa'
 import TableHorarios from './TableHorarios'
 
+// Componente para a visualização e cadastro de novas turmas.
 const ViewCadTurma = (props: propsView) => {
 
+  // Dias da semana disponíveis para a seleção de horários.
   const diaSemana:propSelect[] = [
     { name: 'segunda', uuid: '1' },
     { name: 'terça', uuid: '2' },
@@ -18,8 +21,10 @@ const ViewCadTurma = (props: propsView) => {
     { name: 'sexta', uuid: '5' }
   ]
 
+  // Data atual para uso na criação da turma.
   const date = new Date
 
+  // Estado inicial do formulário de cadastro da turma.
   const [form, setForm] = React.useState<cadTurma>({
     disciplina: '',
     sala: '',
@@ -29,6 +34,7 @@ const ViewCadTurma = (props: propsView) => {
     created_at: formatDate(date),
     updated_at: null
   })
+  // Estados para armazenar opções e dados selecionados.
   const [disciplinas, setDisciplinas] = React.useState<propSelect[]>([])
   const [salas, setSalas] = React.useState<propSelect[]>([])
   const [dataSalas, setDataSalas] = React.useState<dataSala[]>([])
@@ -58,24 +64,31 @@ const ViewCadTurma = (props: propsView) => {
 
   const [ok, setOk] = React.useState(false)
 
+  // Manipula as mudanças nos inputs do formulário, atualizando o estado correspondente.
   const handleChangeForm = (value: string, label: string) => {
     setForm((prev) => ({ ...prev, 
       [label]: value
     }))
   }
 
+  // Manipula as mudanças nos horários de aula, atualizando o estado do horário.
   const handleChangeFormHorario = (value: string, label: string) => {
     setFormHorario((prev) => ({ ...prev,
       [label]: value
     }))
   }
 
+  // Busca e carrega dados essenciais (disciplinas, salas e professores) do backend para preencher os seletores do formulário.
   const handleGet = async () => {
+    // Obtém dados do usuário logado a partir do localStorage.
     const dataUser = localStorage.getItem('@aplication/aoponto')
     if (dataUser) {
+      // Converte os dados do usuário de string JSON para objeto.
       const tempUser = JSON.parse(dataUser)
       try {
+        // Requisição para obter todas as disciplinas disponíveis.
         let response = await api.get('/disciplinas', { params: { all: true } })
+        // Mapeia a resposta para extrair somente o necessário e atualiza o estado `disciplinas`.
         if (response) {
           const temp = response.data.map((item: { name: any }) => {
             return {
@@ -85,6 +98,7 @@ const ViewCadTurma = (props: propsView) => {
           })
           setDisciplinas(temp)
         }
+        // Requisição para obter todas as salas relacionadas à escola do usuário.
         response = await api.get('/salas', { params: { all: true, attribute: "escola_uuid", value: tempUser.user.escola_uuid } })
         if (response) {
           const temp = response.data.map((item: { nome: any, uuid: any }) => {
@@ -96,6 +110,7 @@ const ViewCadTurma = (props: propsView) => {
           setSalas(temp)
           setDataSalas(response.data)
         }
+        // Requisição para obter informações de professores (usuários com access_level 2) da escola do usuário.
         response = await api.get('/usuario', { params: { all: true, attribute: "escola_uuid", value: tempUser.user.escola_uuid } })
         if (response) {
           let tempResponse: dataUser[] = response.data
@@ -109,16 +124,21 @@ const ViewCadTurma = (props: propsView) => {
           setProfessores(temp)
         }
       } catch (error) {
+        // Loga qualquer erro que ocorrer durante as requisições.
         console.log(error)
       }
     }
   }
 
+  // Trata o evento de submissão do formulário para cadastrar uma nova turma.
   const handleSubmit = async () => {
+    // Verifica se a disciplina já está cadastrada para evitar duplicatas.
     if (ok) {
+      // Prepara os dados da nova turma para serem enviados.
       let updatedForm = { ...form,
         horario: formHorarios
       }
+      // Validação dos campos obrigatórios.
       if(updatedForm.disciplina === '' ||
         updatedForm.nome_professor === '' ||
         updatedForm.sala === '' ||
@@ -126,6 +146,7 @@ const ViewCadTurma = (props: propsView) => {
         setMessage('Preencha todos os campos corretamente')
         setAlert(true)
       } else {
+        // Verifica se há conflitos de horário com outras turmas.
         const horariosCadastrados: horario[] = []
         turmas.map(item => {
           return item.horario.map(i => horariosCadastrados.push(i))
@@ -136,6 +157,7 @@ const ViewCadTurma = (props: propsView) => {
           setMessage('Horário requisitado já possui turma')
           setAlert(true)
         } else {
+          // Tenta cadastrar a nova turma no servidor.
           try {
             await api.post('/turmas/', updatedForm)
             setMessage('Turma cadastrado com sucesso!')
@@ -153,26 +175,33 @@ const ViewCadTurma = (props: propsView) => {
       setAlert(true)
     }
   }
-
+  // Define a ação a ser realizada quando o alerta é fechado.
   const alertAction = () => {
     if(exit) {
-      setAlert(false)
-      props.setView('Listar')
+      // Fecha o alerta e redireciona para a visualização da lista de turmas.
+      setAlert(false);
+      props.setView('Listar');
     } else {
-      setAlert(false)
+      // Apenas fecha o alerta.
+      setAlert(false);
     }
   }
 
+  // Prepara ou cancela a definição dos horários para a turma.
   const handleDef = () => {
-      if(form.sala === '' ||
+    // Verifica se os campos necessários para definir os horários estão preenchidos.
+    if(form.sala === '' ||
         form.disciplina === ''||
         form.nome_professor === '') {
         setMessage('Preencha todos os campos corretamente')
         setAlert(true)
       } else {
-        if (def) {
-          setHorarios([])
+      // Alterna o estado de definição dos horários.
+      if (def) {
+        // Reseta os horários se a definição estiver sendo cancelada.
+        setHorarios([])
         } else {
+        // Identifica o turno da sala selecionada e ajusta os horários disponíveis conforme o turno.
         const periodo = dataSalas.find(item => item.uuid === form.sala)
         if(periodo) { 
           setDataSala(periodo)
@@ -202,6 +231,7 @@ const ViewCadTurma = (props: propsView) => {
       }
     setDef(!def)
     }
+    // Limpa os horários definidos e o horário atualmente em edição.
     setFormHorarios([])
     setFormHorario({
       dia: '',
@@ -217,69 +247,81 @@ const ViewCadTurma = (props: propsView) => {
     setConstroi(false)
     setConstroi(true)
   }, [destroy])
-
+// Início do bloco de retorno do componente.
   return (
     <>
+      {/* Título da página */}
       <h1 className='text-lg w-full px-2'>Cadastrar Turma</h1>
+      {/* Container para os campos do formulário */}
       <div className='flex flex-wrap gap-x-4 p-2 w-full'>
+        {/* Campo de seleção para escolher o professor */}
         <EleInput 
           label='Professor'
           type='select'
-          data={professores}
+          data={professores} // Dados dos professores obtidos da API
           name='nome_professor'
-          value={form.nome_professor}
-          onChange={handleChangeForm}
-          disabled={def}
+          value={form.nome_professor} // Valor atual para o professor
+          onChange={handleChangeForm} // Manipulador para mudanças no campo
+          disabled={def} // Desabilita o campo se os horários estão sendo definidos
         />
+        {/* Campo de seleção para escolher a disciplina */}
         <EleInput 
           label='Disciplina'
           type='select'
-          data={disciplinas}
+          data={disciplinas} // Dados das disciplinas obtidos da API
           size='w-1/2'
           name='disciplina'
-          value={form.disciplina}
-          onChange={handleChangeForm}
-          disabled={def}
+          value={form.disciplina} // Valor atual para a disciplina
+          onChange={handleChangeForm} // Manipulador para mudanças no campo
+          disabled={def} // Desabilita o campo se os horários estão sendo definidos
         />
+        {/* Campo de seleção para escolher a série (sala) */}
         <EleInput 
           label='Série'
           type='select'
-          data={salas}
+          data={salas} // Dados das salas obtidos da API
           size='w-1/2'
           name='sala'
-          value={form.sala}
-          onChange={handleChangeForm}
-          disabled={def}
+          value={form.sala} // Valor atual para a sala
+          onChange={handleChangeForm} // Manipulador para mudanças no campo
+          disabled={def} // Desabilita o campo se os horários estão sendo definidos
         />
+        {/* Renderiza a seção de horários dinamicamente se a definição de horários estiver ativa */}
         {def && (
           <>
+            {/* Divisor visual */}
             <div className='border-b my-2 border-gray-400 border-solid w-full'></div>
+            {/* Tabela de horários já definidos, mostrada se existirem horários */}
             {formHorarios.length !== 0 && constroi && (
               <>
-              <Table className='w-full'>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className='w-5'>Ações</TableHead>
-                    <TableHead className='text-center'>Dia</TableHead>
-                    <TableHead className='text-center'>Hora</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {formHorarios.map((ele) => (
-                    <TableRow key={ele.dia + ele.hora}>
-                      <TableCell><FaTrashAlt onClick={() => {
-                        const temp = formHorarios.filter(item => item !== ele)
-                        setFormHorarios(temp)
-                        setDestroy(!destroy)
-                      }} /></TableCell>
-                      <TableCell className='text-center'>{diaSemana.find(item => item.uuid === ele.dia)?.name}</TableCell>
-                      <TableCell className='text-center'>{ele.hora}:00</TableCell>
+                <Table className='w-full'>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className='w-5'>Ações</TableHead>
+                      <TableHead className='text-center'>Dia</TableHead>
+                      <TableHead className='text-center'>Hora</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {/* Mapeia os horários definidos para linhas na tabela */}
+                    {formHorarios.map((ele) => (
+                      <TableRow key={ele.dia + ele.hora}>
+                        {/* Botão para remover horário */}
+                        <TableCell><FaTrashAlt onClick={() => {
+                          const temp = formHorarios.filter(item => item !== ele)
+                          setFormHorarios(temp)
+                          setDestroy(!destroy)
+                        }} /></TableCell>
+                        {/* Dia e hora do horário */}
+                        <TableCell className='text-center'>{diaSemana.find(item => item.uuid === ele.dia)?.name}</TableCell>
+                        <TableCell className='text-center'>{ele.hora}:00</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </>
             )}
+            {/* Campos para adicionar novos horários */}
             <EleInput 
               label='Dia da Semana'
               type='select'
@@ -301,29 +343,32 @@ const ViewCadTurma = (props: propsView) => {
           </>
         )}
       </div>
+      {/* Botões para ações de definição de horários e submissão do formulário */}
       <div className="flex w-full">
         <EleButton onClick={handleDef} >{def ? 'Voltar' : 'Definir Horários'}</EleButton>
+        {/* Mostra o botão para adicionar horários somente se a definição de horários estiver ativa */}
         {def && (<EleButton onClick={() => {
           if(formHorario.dia === '' || formHorario.hora === ''){
             setMessage('Preencha todos os campos corretamente')
             setAlert(true)
           } else {
             formHorarios.push(formHorario)
-            setFormHorario({
-              dia: '',
-              hora: ''
-            })
+            setFormHorario({ dia: '', hora: '' })
           }
         }}>Adicionar Horários</EleButton>)}
       </div>
+      {/* Componente adicional para verificar e mostrar a disponibilidade de horários para a turma */}
       {def && (<TableHorarios data={dataSala} setOk={setOk} disciplina={form.disciplina} setTurmas={setTurmas}/>)}
+      {/* Botão para submeter o formulário de cadastro de turma */}
       <EleButton onClick={handleSubmit}>Cadastrar</EleButton>
+      {/* Componente de alerta para mostrar mensagens de erro ou sucesso */}
       <EleAlert 
         message={message}
         open={alert}
         setAlert={alertAction}/>
     </>
   )
+
 }
 
-export default ViewCadTurma
+export default ViewCadTurma // Exporta o componente para utilização em outras partes da aplicação.

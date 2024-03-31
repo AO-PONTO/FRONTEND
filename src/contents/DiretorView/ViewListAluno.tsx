@@ -1,28 +1,22 @@
+// Importações necessárias do React, componentes de UI, ícones, API e outros componentes/utilitários.
 import React from 'react'
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import api from '@/service/api'
 import { dataAluno, propsView } from '@/interface'
 import { FaEdit, FaTrashAlt } from "react-icons/fa"
 import { EstModal } from '@/components'
 import ModEditAluno from './ModEditAluno'
 
+// Componente principal ViewListAluno.
 const ViewListAluno = (props: propsView) => {
-
+  // Estados para gerenciar alunos, ações, alertas e o UUID para exclusão.
   const [alunos, setAlunos] = React.useState<dataAluno[]>([])
   const [aluno, setAluno] = React.useState<dataAluno>()
   const [actionView, setActionView] = React.useState<string>('Listar')
   const [alert, setAlert] = React.useState<boolean>(false)
   const [uuid, setUuid] = React.useState<string>('')
 
+  // Função para carregar a lista de alunos da API.
   const handleAlunos = async () => {
     const dataUser = localStorage.getItem('@aplication/aoponto')
     if (dataUser) {
@@ -38,10 +32,12 @@ const ViewListAluno = (props: propsView) => {
     }
   }
 
+  // Efeito para carregar alunos quando o componente é montado.
   React.useEffect(()=> {
     handleAlunos()
   }, [])
 
+  // Função para executar a ação de exclusão de um aluno.
   const deleteAction = async () => {
     try {
       await api.delete('/alunos', { params: { uuid: uuid }})
@@ -51,6 +47,7 @@ const ViewListAluno = (props: propsView) => {
     }
   }
 
+  // Estrutura JSX do componente.
   return (
     <>
       {actionView === 'Listar' ? (
@@ -116,7 +113,6 @@ const ViewListAluno = (props: propsView) => {
           {aluno && <ModEditAluno form={aluno} setView={setActionView} reset={handleAlunos} /> }
         </>
       )}
-      
     </>
   )
 }
