@@ -11,12 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      - name: Remover arquivos .env*
-        run: find . -type f -name '.env*' -exec rm -f {} +
-        
-      - name: Copy .env file
-        run: echo ${{ secrets.ENV_FRONTEND }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
