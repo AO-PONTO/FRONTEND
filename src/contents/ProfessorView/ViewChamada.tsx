@@ -321,7 +321,7 @@ const ViewChamada = () => {
                         setTurma(true);
                         handleAlunos(element);
                       } else {
-                        setMessage('Você já cadastrou a frequencia dessa turma hoje');
+                        setMessage('Erro ao tentar cadastrar presença nesta turma');
                         setAlert(true);
                       }
                     } else {
