@@ -24,8 +24,8 @@ module.exports = {
       },
       backgroundColor: {
         bgApp : '#E0E0E0',
-        button : '#12cfef',
-        buttonHover : '#02bfee',
+        button : '#093189',
+        buttonHover : '#002179',
         primary: '#BBBBBB',
         primaryHover: '#DDDDDD'
       },
@@ -41,8 +41,8 @@ module.exports = {
         expansive : "5px 5px 15px #00000011",
       },
       colors: {
-        primary: '#12cfef',
-        primaryHover: '#02bfee',
+        primary: '#093189',
+        primaryHover: '#002179',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
